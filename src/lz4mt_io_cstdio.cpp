@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #ifdef _WIN32
 #include <io.h>
 #include <fcntl.h>
@@ -50,7 +51,7 @@ FILE* getStdout() {
 #endif
 	return stdout;
 }
-}
+} // anonymous namespace
 
 namespace Lz4Mt { namespace Cstdio {
 bool fileExist(const std::string& filename) {
@@ -154,17 +155,17 @@ int write(const Lz4MtContext* ctx, const void* source, int sourceSize) {
 	}
 }
 
-uint64_t getFilesize(const std::string& fileanme) {
+uint64_t getFilesize(const std::string& filename) {
 	int r = 0;
 #if defined(_MSC_VER)
 	struct _stat64 s = { 0 };
-	r = _stat64(fileanme.c_str(), &s);
+	r = _stat64(filename.c_str(), &s);
 	auto S_ISREG = [](decltype(s.st_mode) x) {
 		return (x & S_IFMT) == S_IFREG;
 	};
 #else
 	struct stat s;
-	r = stat(fileanme.c_str(), &s);
+	r = stat(filename.c_str(), &s);
 #endif
 	if(r || !S_ISREG(s.st_mode)) {
 		return 0;
@@ -199,6 +200,30 @@ bool isAttyStdout() {
 #else
 	return 0 != isatty(fileno(stdout));
 #endif
+}
+
+bool compareFilename(const std::string& lhs, const std::string& rhs) {
+	const auto l = lhs.c_str();
+	const auto r = rhs.c_str();
+#if defined(_WIN32)
+	return 0 == _stricmp(l, r);
+#else
+	return 0 == strcmp(l, r);
+#endif
+}
+
+bool hasExtension(const std::string& filename, const std::string& extension) {
+	const auto pos = filename.find_last_of('.');
+	if(std::string::npos == pos) {
+		return false;
+	}
+	const auto ext = filename.substr(pos);
+	return compareFilename(ext, extension);
+}
+
+std::string removeExtension(const std::string& filename) {
+	const auto o = filename.find_last_of('.');
+	return filename.substr(0, o);
 }
 
 }} // namespace Cstdio, Lz4Mt

@@ -2,6 +2,7 @@
 #define LZ4MT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -42,6 +43,7 @@ typedef int (*Lz4MtCompress)(
 	, char* dst
 	, int isize
 	, int maxOutputSize
+	, int compressionLevel
 );
 
 typedef int (*Lz4MtCompressBound)(
@@ -85,6 +87,14 @@ enum Lz4MtResult {
 	, LZ4MT_RESULT_STREAM_CHECKSUM_MISMATCH
 	, LZ4MT_RESULT_DECOMPRESS_FAIL
 	, LZ4MT_RESULT_BAD_ARG
+	, LZ4MT_RESULT_INVALID_BLOCK_SIZE
+	, LZ4MT_RESULT_INVALID_HEADER_RESERVED1
+	, LZ4MT_RESULT_INVALID_HEADER_RESERVED2
+	, LZ4MT_RESULT_INVALID_HEADER_RESERVED3
+	, LZ4MT_RESULT_INVALID_HEADER_SKIPPABLE_SIZE_UNREADABLE
+	, LZ4MT_RESULT_INVALID_HEADER_CANNOT_SKIP_SKIPPABLE_AREA
+	, LZ4MT_RESULT_CANNOT_WRITE_DATA_BLOCK
+	, LZ4MT_RESULT_CANNOT_WRITE_DECODED_BLOCK
 };
 typedef enum Lz4MtResult Lz4MtResult;
 
@@ -95,7 +105,7 @@ struct Lz4MtFlg {
 	char	streamChecksum;		// bit[2]
 	char	streamSize;			// bit[3]
 	char	blockChecksum;		// bit[4]
-	char	blockIndependance;	// bit[5]
+	char	blockIndependence;	// bit[5]
 	char	versionNumber;		// bit[6,7]
 };
 typedef struct Lz4MtFlg Lz4MtFlg;
@@ -132,6 +142,7 @@ struct Lz4MtContext {
 	Lz4MtCompressBound	compressBound;
 	Lz4MtDecompress		decompress;
 	Lz4MtMode			mode;
+	int					compressionLevel;
 };
 typedef struct Lz4MtContext Lz4MtContext;
 
@@ -139,6 +150,7 @@ typedef struct Lz4MtContext Lz4MtContext;
 Lz4MtContext lz4mtInitContext();
 Lz4MtStreamDescriptor lz4mtInitStreamDescriptor();
 const char* lz4mtResultToString(Lz4MtResult result);
+int lz4mtResultToLz4cExitCode(Lz4MtResult result);
 
 Lz4MtResult lz4mtCompress(
 	  Lz4MtContext* ctx
